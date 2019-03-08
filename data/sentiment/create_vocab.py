@@ -1,7 +1,7 @@
 import numpy as np 
 
-g=open('amazon_cells_labelled.txt')
-f=open('amazon_vocab.txt',"w")
+g=open('imdb_labelled_sorted.txt')
+f=open('imdb_vocab.txt',"w")
 
 a=set()
 for line in g:

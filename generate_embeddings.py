@@ -8,7 +8,7 @@ Convert pretrained GloVe embeddings into npy file
 
 Run using: 
 
-python3 embeddings.py -d data/glove.42B.300d.txt --npy_output data/embeddings.npy --dict_output data/vocab.pckl --dict_whitelist data/aclImdb/imdb.vocab
+python3 generate_embeddings.py -d data/glove.42B.300d.txt --npy_output data/embeddings.npy --dict_output data/vocab.pckl --dict_whitelist data/aclImdb/imdb.vocab
 
 """
 

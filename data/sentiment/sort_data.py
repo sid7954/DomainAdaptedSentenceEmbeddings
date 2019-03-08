@@ -1,7 +1,7 @@
 import numpy as np 
 
-g=open('amazon_cells_labelled.txt')
-f=open('amazon_cells_labelled_sorted.txt','w')
+g=open('imdb_labelled.txt')
+f=open('imdb_labelled_sorted.txt','w')
 pos=[]
 neg=[]
 

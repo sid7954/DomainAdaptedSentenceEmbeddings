@@ -19,7 +19,7 @@ def convert_file(word_list, word_dict):
 def discover_dataset(wdict):
     pos_dataset = []
     neg_dataset = []
-    g=open("data/sentiment/amazon_cells_labelled_sorted.txt")
+    g=open("data/sentiment/imdb_labelled_sorted.txt")
     for line in g:
         line=line.replace("\t"," ")
         line=line.replace("."," . ")
