@@ -1,3 +1,4 @@
+import csv
 import pandas as pd
 # import nltk.data
 
@@ -14,12 +15,31 @@ def getDF(path):
     i += 1
   return pd.DataFrame.from_dict(df, orient='index')
 
-dataset = 'imdb'
-path = '../' + dataset + '_bert_embeddings.txt'
+dataset = 'amazon'
+path = '../' + dataset + 'tsv_bert_embeddings.txt'
+out_path = '../' + dataset + '.tsv'
 
 df = getDF(path)
-# print(df)
-with open(path, 'w') as emb_file:
+
+reviews = []
+labels = []
+
+# print(df)		# df has embeddings even for the header row in case of custom embeddings
+with open(out_path, 'r', encoding='utf-8') as emb_file:
+	csv_reader = csv.reader(emb_file, delimiter="\t", quotechar=None)
+	for row in csv_reader:
+		reviews.append(row[0])
+		labels.append(row[3])
+
+# print(len(reviews))
+# print(len(df['features']))
+with open(out_path, 'w', encoding='utf-8') as emb_file:
+	csv_writer = csv.writer(emb_file, delimiter='\t', quotechar=None)
+	csv_writer.writerow(['Review', 'BERT Embeddings', 'CNN Embeddings', 'Sentiment'])
+	idx = 0
 	for example in df['features']:
-		feature_vec = str(example[0]['layers'][0]['values']).replace(',', '').replace('[', '').replace(']', '')
-		emb_file.write(feature_vec + '\n')
+		if idx > 0:
+			feature_vec = str(example[0]['layers'][0]['values']).replace(',', '').replace('[', '').replace(']', '')
+			# print(idx)
+			csv_writer.writerow([reviews[idx], feature_vec, '', labels[idx]])
+		idx += 1

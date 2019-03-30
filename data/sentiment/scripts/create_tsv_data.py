@@ -1,6 +1,6 @@
 import csv
 
-dataset = 'imdb'
+dataset = 'amazon'
 
 with open('../' + dataset + '.tsv', 'w', encoding='utf-8') as data_tsv, open('../' + dataset + '_labelled.txt', "r", encoding='utf-8') as data_txt:
     data_tsv.write('Review	BERT Embeddings	CNN Embeddings	Sentiment\n')
