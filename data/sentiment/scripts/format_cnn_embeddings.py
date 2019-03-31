@@ -1,7 +1,7 @@
 import numpy as np 
 
-g=open('imdb_cnn_embeddings.txt')
-f=open('imdb_cnn_embeddings2.txt','w')
+g=open('../imdb_cnn_trainable_glove.txt')
+f=open('imdb_cnn_trainable_glove.txt','w')
 
 
 for line in g:

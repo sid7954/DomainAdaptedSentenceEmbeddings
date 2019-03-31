@@ -22,7 +22,7 @@ class TextCNN(object):
 
         # Embedding layer
         
-        self.word_embedding = tf.Variable(tf.constant(0.0, shape=[vocab_size, embedding_size]), trainable=False, name='W')
+        self.word_embedding = tf.Variable(tf.constant(0.0, shape=[vocab_size, embedding_size]), trainable=True, name='W')
         self.embedding_placeholder = tf.placeholder(tf.float32, [vocab_size, embedding_size])
         self.embedding_init = self.word_embedding.assign(self.embedding_placeholder)
 

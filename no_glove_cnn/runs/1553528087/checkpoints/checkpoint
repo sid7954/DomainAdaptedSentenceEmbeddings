@@ -1,0 +1,2 @@
+model_checkpoint_path: "/Users/Siddhant/Downloads/DomainAdaptedSentenceEmbeddings/no_glove_cnn/runs/1553528087/checkpoints/model-500"
+all_model_checkpoint_paths: "/Users/Siddhant/Downloads/DomainAdaptedSentenceEmbeddings/no_glove_cnn/runs/1553528087/checkpoints/model-500"
