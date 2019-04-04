@@ -16,31 +16,48 @@ def convert_file(word_list, word_dict):
     return a
 
 
-def discover_dataset(wdict):
-    pos_dataset = []
-    neg_dataset = []
-    g=open("../data/sentiment/yelp_labelled_sorted.txt")
-    for line in g:
-        line=line.replace("\t"," ")
-        line=line.replace("."," . ")
-        line=line.replace("!"," ! ")
-        line=line.replace("?"," ? ")
-        line=line.replace(","," , ")
-        _ = line.split(" ")
-        x_ = _[:-1]
-        y_ = _[-1]
-        if(y_ == '0\n'):
-            neg_dataset.append(convert_file( x_ , wdict))
-        else:
-            pos_dataset.append(convert_file( x_ , wdict))
-    return pos_dataset, neg_dataset
-    # for root, _, files in os.walk(path):
-    #     for sfile in [f for f in files if '.txt' in f]:
-    #         filepath = os.path.join(root, sfile)
-    #         dataset.append(convert_file(filepath, wdict))
-    #         print(len(dataset))
-    #return dataset
+# def discover_dataset(wdict):
+#     pos_dataset = []
+#     neg_dataset = []
+#     g=open("../data/sentiment/yelp_labelled_sorted.txt")
+#     for line in g:
+#         line=line.replace("\t"," ")
+#         line=line.replace("."," . ")
+#         line=line.replace("!"," ! ")
+#         line=line.replace("?"," ? ")
+#         line=line.replace(","," , ")
+#         _ = line.split(" ")
+#         x_ = _[:-1]
+#         y_ = _[-1]
+#         if(y_ == '0\n'):
+#             neg_dataset.append(convert_file( x_ , wdict))
+#         else:
+#             pos_dataset.append(convert_file( x_ , wdict))
+#     return pos_dataset, neg_dataset
 
+
+def discover_dataset(wdict):
+    X = []
+    Y = []
+    g=open("../data/sst-2/train_all.tsv")
+    i=0
+    count=0
+    for line in g:
+        if(i>0):
+            line=line.split("\t")
+            # print(len(line))
+            x_ = line[0]
+            y_ = line[1]
+            X.append(convert_file( x_ , wdict))
+            if(y_ == '0'):
+                Y.append([0, 1])
+                count+=1
+            else:
+                Y.append([1,0])
+        i=i+1
+    print("i ",i)
+    print("count ",count)
+    return X, Y
 
 def pad_dataset(dataset, maxlen):
     return np.array(
@@ -57,35 +74,24 @@ class IMDBDataset():
         with open(dict_path, 'rb') as dfile:
             wdict = pickle.load(dfile)
 
-        self.pos_dataset , self.neg_dataset = discover_dataset(wdict)
-        self.pos_dataset = pad_dataset(self.pos_dataset, maxlen).astype('i')
-        self.neg_dataset = pad_dataset(self.neg_dataset, maxlen).astype('i')
+        self.X , self.Y = discover_dataset(wdict)
+        self.X = pad_dataset(self.X, maxlen).astype('i')
 
     def __len__(self):
-        return len(self.pos_dataset) + len(self.neg_dataset)
+        return len(self.X)
 
-    def get_example(self, i):
-        is_neg = i >= len(self.pos_dataset)
-        dataset = self.neg_dataset if is_neg else self.pos_dataset
-        idx = i - len(self.pos_dataset) if is_neg else i
-        label = [0, 1] if is_neg else [1, 0]
+    # def get_example(self, i):
+    #     is_neg = i >= len(self.pos_dataset)
+    #     dataset = self.neg_dataset if is_neg else self.pos_dataset
+    #     idx = i - len(self.pos_dataset) if is_neg else i
+    #     label = [0, 1] if is_neg else [1, 0]
         
-        print (type(dataset[idx]))
-        return (dataset[idx], np.array(label, dtype=np.int32))
+    #     print (type(dataset[idx]))
+    #     return (dataset[idx], np.array(label, dtype=np.int32))
     
     def load(self):
-        print(len(self.pos_dataset))
-        print(len(self.neg_dataset))
-        dataset = np.concatenate((self.pos_dataset, self.neg_dataset))
-        labels = []
-        
-        for idx in range (0, len(self.pos_dataset)):
-            labels.append([1, 0])
-        
-        for idx in range (0, len(self.neg_dataset)):
-            labels.append([0, 1])
-        
-        return dataset, np.array(labels, dtype=np.int32)
+        print(len(self.X))        
+        return self.X, np.array(self.Y, dtype=np.int32)
 
 
 # Function for handling word embeddings

@@ -50,7 +50,7 @@ print ("Loading Dataset ...")
 
 
 
-dataset = IMDBDataset('../data/vocab.pckl')
+dataset = IMDBDataset('../txt_cnn_glove/glove_embeddings/sst-2/vocab.pckl')
 X, Y = dataset.load()
 X_final, Y_final = dataset.load()
 print ("Dataset loaded. Preparing data and loading embeddings ...")
@@ -70,7 +70,7 @@ x_train, x_dev = x_shuff[:idx], x_shuff[idx:]
 y_train, y_dev = y_shuff[:idx], y_shuff[idx:]
 # print("Train/Val split: {:d}/{:d}".format(len(y_train), len(y_val)))
 
-vocab_size = 2559
+vocab_size = 16797
 #embedding_path = '../data/embeddings.npy'
 #embedding = utils.load_embeddings(embedding_path, vocab_size, FLAGS.embedding_dim)
 print ("Embeddings loaded, Vocabulary Size: {:d}. Starting training ...".format(vocab_size))
