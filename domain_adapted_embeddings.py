@@ -35,8 +35,8 @@ def train_classifier(x_train, y_train, x_test, y_test):
 	y_pred = clf.predict(x_test)
 	prec = precision_score(y_test, y_pred, average='binary')
 	f1 = f1_score(y_test, y_pred, average ='binary')
-	auc = accuracy_score(y_test, y_pred)
-	return prec, f1, auc
+	acc = accuracy_score(y_test, y_pred)
+	return prec, f1, acc
 
 
 def main():
@@ -77,34 +77,34 @@ def main():
 	for expt_id in range(n_expts):
 		# print('Experiment:', expt_id)
 		x_train, x_test, y_train, y_test = train_test_split(kcca_x, y, stratify=y, test_size=0.1, random_state=seeds[expt_id])
-		kcca_prec, kcca_f1, kcca_auc = train_classifier(x_train, y_train, x_test, y_test)
+		kcca_prec, kcca_f1, kcca_acc = train_classifier(x_train, y_train, x_test, y_test)
 		kcca_precs.append(kcca_prec)
 		kcca_f1s.append(kcca_f1)
-		kcca_accs.append(kcca_auc)
-		# print('KCCA:\nPrecision: {0}\nF1: {1}\nAccuracy: {2}\n'.format(kcca_prec, kcca_f1, kcca_auc))
+		kcca_accs.append(kcca_acc)
+		# print('KCCA:\nPrecision: {0}\nF1: {1}\nAccuracy: {2}\n'.format(kcca_prec, kcca_f1, kcca_acc))
 
 		# Just CNN:
 		x_train, x_test, y_train, y_test = train_test_split(cnn_embeddings, y, stratify=y, test_size=0.1, random_state=seeds[expt_id])
-		cnn_prec, cnn_f1, cnn_auc = train_classifier(x_train, y_train, x_test, y_test)
+		cnn_prec, cnn_f1, cnn_acc = train_classifier(x_train, y_train, x_test, y_test)
 		cnn_precs.append(cnn_prec)
 		cnn_f1s.append(cnn_f1)
-		cnn_accs.append(cnn_auc)
-		# print('CNN:\nPrecision: {0}\nF1: {1}\nAccuracy: {2}\n'.format(cnn_prec, cnn_f1, cnn_auc))
+		cnn_accs.append(cnn_acc)
+		# print('CNN:\nPrecision: {0}\nF1: {1}\nAccuracy: {2}\n'.format(cnn_prec, cnn_f1, cnn_acc))
 		
 		# Just BERT without Finetuning:
 		x_train, x_test, y_train, y_test = train_test_split(bert_embeddings, y, stratify=y, test_size=0.1, random_state=seeds[expt_id])
-		bert_prec, bert_f1, bert_auc = train_classifier(x_train, y_train, x_test, y_test)
+		bert_prec, bert_f1, bert_acc = train_classifier(x_train, y_train, x_test, y_test)
 		bert_precs.append(bert_prec)
 		bert_f1s.append(bert_f1)
-		bert_accs.append(bert_auc)
-		# print('BERT:\nPrecision: {0}\nF1: {1}\nAccuracy: {2}\n'.format(bert_prec, bert_f1, bert_auc))
+		bert_accs.append(bert_acc)
+		# print('BERT:\nPrecision: {0}\nF1: {1}\nAccuracy: {2}\n'.format(bert_prec, bert_f1, bert_acc))
 
 		x_train, x_test, y_train, y_test = train_test_split(concat_x, y, stratify=y, test_size=0.1, random_state=seeds[expt_id])
-		concat_prec, concat_f1, concat_auc = train_classifier(x_train, y_train, x_test, y_test)
+		concat_prec, concat_f1, concat_acc = train_classifier(x_train, y_train, x_test, y_test)
 		concat_precs.append(concat_prec)
 		concat_f1s.append(concat_f1)
-		concat_accs.append(concat_auc)
-		# print('Concatenate:\nPrecision: {0}\nF1: {1}\nAccuracy: {2}'.format(concat_prec, concat_f1, concat_auc))
+		concat_accs.append(concat_acc)
+		# print('Concatenate:\nPrecision: {0}\nF1: {1}\nAccuracy: {2}'.format(concat_prec, concat_f1, concat_acc))
 	
 	print('\nSummary of {0} experiments:\n'.format(n_expts))
 	print('KCCA:\nPrecision: {0} +- {1}\nF1: {2} +- {3}\nAccuracy: {4} +- {5}\n'.format(np.mean(kcca_precs), np.std(kcca_precs), np.mean(kcca_f1s), np.std(kcca_f1s), np.mean(kcca_accs), np.std(kcca_accs)))
