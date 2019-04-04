@@ -44,7 +44,7 @@ def correct_preds(clf, x_test, y_test):
 	y_pred = clf.predict(np.asarray(x_test['KCCA'].tolist()))
 	for i in range(len(y_pred)):
 		if y_pred[i] == y_test[i]:
-			c_preds.add(x_test['Reviews'].values[i])
+			c_preds.add(x_test['Review'].values[i])
 	return c_preds
 
 
@@ -53,7 +53,7 @@ def incorrect_preds(clf, x_test, y_test):
 	y_pred = clf.predict(np.asarray(x_test['BERT'].tolist()))
 	for i in range(len(y_pred)):
 		if y_pred[i] != y_test[i]:
-			ic_preds.add(x_test['Reviews'].values[i])
+			ic_preds.add(x_test['Review'].values[i])
 	return ic_preds
 
 
@@ -64,21 +64,19 @@ def main():
 	cnn_dimension=384
 
 	df = pd.read_csv('data/' + dataset + '/' + dataset + '.tsv', delimiter='\t')
-	reviews = np.asarray(df['Review'].values)
-	bert_embeddings = np.asarray(df['BERT'].transform(np.fromstring, sep=' ').tolist())
-	cnn_embeddings = np.asarray(df['CNN_no_glove'].transform(np.fromstring, sep=' ').tolist())
+	df['BERT'] = df['BERT'].transform(np.fromstring, sep=' ')
+	df['CNN'] = df['CNN_no_glove'].transform(np.fromstring, sep=' ')
 	y = np.asarray(df['Sentiment'].values)
-
-	# print(bert_embeddings)
-	# print(y)
 
 	# KCCA:
 	kcca_xdim = min(bert_dimension, cnn_dimension)
+	bert_embeddings = np.asarray(df['BERT'].tolist())
+	cnn_embeddings = np.asarray(df['CNN'].tolist())
 	kcca_x = kcca_transform(bert_embeddings, cnn_embeddings, kcca_xdim, 0.01, 2.5)
 	# Concatenate BERT and CNN:
 	concat_x = np.concatenate((bert_embeddings, cnn_embeddings), axis=1)
-
-	all_df = pd.DataFrame({'Reviews': reviews, 'BERT': df['BERT'].transform(np.fromstring, sep=' '), 'CNN': df['CNN_no_glove'].transform(np.fromstring, sep=' '), 'KCCA': pd.Series(map(lambda x:[x], kcca_x)).apply(lambda x:x[0]), 'Concat': pd.Series(map(lambda x:[x], concat_x)).apply(lambda x:x[0]), 'Labels': y})
+	df['KCCA'] = pd.Series(map(lambda x:[x], kcca_x)).apply(lambda x:x[0])
+	df['Concat'] = pd.Series(map(lambda x:[x], concat_x)).apply(lambda x:x[0])
 
 	n_expts = 20
 	seeds = random.sample(range(1, 1000), n_expts)
@@ -96,7 +94,7 @@ def main():
 	concat_accs = []
 
 	for expt_id in range(n_expts):
-		x_train, x_test, y_train, y_test = train_test_split(all_df, y, stratify=y, test_size=0.1, random_state=seeds[expt_id])
+		x_train, x_test, y_train, y_test = train_test_split(df, y, stratify=y, test_size=0.1, random_state=seeds[expt_id])
 
 		# print('Experiment:', expt_id)
 		kcca_prec, kcca_f1, kcca_acc, kcca_clf = train_classifier(np.asarray(x_train['KCCA'].tolist()), y_train, np.asarray(x_test['KCCA'].tolist()), y_test)
