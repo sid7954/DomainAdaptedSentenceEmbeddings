@@ -16,48 +16,42 @@ def convert_file(word_list, word_dict):
     return a
 
 
-# def discover_dataset(wdict):
-#     pos_dataset = []
-#     neg_dataset = []
-#     g=open("../data/sentiment/yelp_labelled_sorted.txt")
-#     for line in g:
-#         line=line.replace("\t"," ")
-#         line=line.replace("."," . ")
-#         line=line.replace("!"," ! ")
-#         line=line.replace("?"," ? ")
-#         line=line.replace(","," , ")
-#         _ = line.split(" ")
-#         x_ = _[:-1]
-#         y_ = _[-1]
-#         if(y_ == '0\n'):
-#             neg_dataset.append(convert_file( x_ , wdict))
-#         else:
-#             pos_dataset.append(convert_file( x_ , wdict))
-#     return pos_dataset, neg_dataset
-
-
-def discover_dataset(wdict):
+def discover_dataset(wdict, test_dev_train):
     X = []
     Y = []
-    g=open("../data/sst-2/train_all.tsv")
+    if (test_dev_train=="test"):
+        g=open("../data/sst-2/test_all.tsv")
+    elif (test_dev_train=="dev"):
+        g=open("../data/sst-2/dev_all.tsv")
+    elif (test_dev_train=="train"):
+        g=open("../data/sst-2/train_all.tsv")
     i=0
-    count=0
     for line in g:
-        if(i>0):
-            line=line.split("\t")
-            # print(len(line))
-            x_ = line[0]
-            y_ = line[1]
-            X.append(convert_file( x_ , wdict))
+        if (i>0):
+            _ = line.split("\t")
+            line=_[0]
+            line=line.replace("\t"," ")
+            line=line.replace("."," . ")
+            line=line.replace("!"," ! ")
+            line=line.replace("?"," ? ")
+            line=line.replace(","," , ")
+            x_ = line.split(" ")
+            y_ = _[1]
+            X.append(convert_file(x_,wdict))
+            # print(x_)
             if(y_ == '0'):
                 Y.append([0, 1])
-                count+=1
             else:
-                Y.append([1,0])
+                Y.append([1, 0])
         i=i+1
-    print("i ",i)
-    print("count ",count)
     return X, Y
+    # for root, _, files in os.walk(path):
+    #     for sfile in [f for f in files if '.txt' in f]:
+    #         filepath = os.path.join(root, sfile)
+    #         dataset.append(convert_file(filepath, wdict))
+    #         print(len(dataset))
+    #return dataset
+
 
 def pad_dataset(dataset, maxlen):
     return np.array(
@@ -67,14 +61,15 @@ def pad_dataset(dataset, maxlen):
 
 # Class for dataset related operations
 class IMDBDataset():
-    def __init__(self, dict_path, maxlen=128):
+    def __init__(self, dict_path, test_dev_train , maxlen=128):
         # pos_path = os.path.join(path, 'pos')
         # neg_path = os.path.join(path, 'neg')
 
         with open(dict_path, 'rb') as dfile:
             wdict = pickle.load(dfile)
 
-        self.X , self.Y = discover_dataset(wdict)
+        self.X , self.Y = discover_dataset(wdict, test_dev_train)
+        print("YO")
         self.X = pad_dataset(self.X, maxlen).astype('i')
 
     def __len__(self):
@@ -90,7 +85,17 @@ class IMDBDataset():
     #     return (dataset[idx], np.array(label, dtype=np.int32))
     
     def load(self):
-        print(len(self.X))        
+        print(len(self.X))
+        # print(len(self.neg_dataset))
+        # dataset = np.concatenate((self.pos_dataset, self.neg_dataset))
+        # labels = []
+        
+        # for idx in range (0, len(self.pos_dataset)):
+        #     labels.append([1, 0])
+        
+        # for idx in range (0, len(self.neg_dataset)):
+        #     labels.append([0, 1])
+        
         return self.X, np.array(self.Y, dtype=np.int32)
 
 

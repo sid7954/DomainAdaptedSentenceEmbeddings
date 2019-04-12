@@ -69,7 +69,7 @@ class TextCNN(object):
 
         print_constant = tf.constant([0.5])
 
-        self.h_drop = tf.cond(tf.math.equal(self.print_embeddings,1.0), lambda: tf.Print(self.h_drop, [self.h_drop], message="This is h_drop: ", summarize=1000000), lambda: self.h_drop)
+        self.h_drop = tf.cond(tf.math.equal(self.print_embeddings,1.0), lambda: tf.Print(self.h_drop, [self.h_drop], message="This is h_drop: ", summarize=10000000), lambda: self.h_drop)
         #self.h_drop = tf.cond(tf.math.equal(self.print_embeddings,1.0), lambda: tf.Print(self.h_drop, [tf.shape(self.h_drop)], message="This is h_drop: ", summarize=1000000), lambda: self.h_drop)
         #self.h_drop = tf.Print(self.h_drop, [self.h_drop], message="This is h_drop: ", summarize=1000000)
 

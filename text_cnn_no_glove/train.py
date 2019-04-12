@@ -27,10 +27,10 @@ tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularization lambda (default: 
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 128, "Batch Size (default: 64)")
-tf.flags.DEFINE_integer("num_epochs", 40, "Number of training epochs (default: 200)")
+tf.flags.DEFINE_integer("num_epochs", 10, "Number of training epochs (default: 200)")
 tf.flags.DEFINE_integer("evaluate_every", 2000, "Evaluate model on dev set after this many steps (default: 100)")
-tf.flags.DEFINE_integer("print_embedding", 16000, "Print embedding after training")
-tf.flags.DEFINE_integer("checkpoint_every",17000, "Save model after this many steps (default: 100)")
+tf.flags.DEFINE_integer("print_embedding", 50, "Print embedding after training")
+tf.flags.DEFINE_integer("checkpoint_every", 500, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 3, "Number of checkpoints to store (default: 5)")
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
@@ -50,24 +50,31 @@ print ("Loading Dataset ...")
 
 
 
-dataset = IMDBDataset('../txt_cnn_glove/glove_embeddings/sst-2/sst2_vocab.pckl')
-X, Y = dataset.load()
-X_final, Y_final = dataset.load()
-print ("Dataset loaded. Preparing data and loading embeddings ...")
+train_dataset = IMDBDataset('../text_cnn_glove/glove_embeddings/sst-2/sst2_vocab.pckl','train')
+dev_dataset = IMDBDataset('../text_cnn_glove/glove_embeddings/sst-2/sst2_vocab.pckl','dev')
+test_dataset = IMDBDataset('../text_cnn_glove/glove_embeddings/sst-2/sst2_vocab.pckl','test')
+X_train, Y_train = train_dataset.load()
+X_dev, Y_dev = dev_dataset.load()
+X_test, Y_test = test_dataset.load()
+print ("Datasets loaded. Preparing data and loading embeddings ...")
 
 np.random.seed(10)
-shuffle_indices = np.random.permutation(np.arange(len(Y)))
+shuffle_indices = np.random.permutation(np.arange(len(Y_train)))
+x_train = X_train[shuffle_indices]
+y_train = Y_train[shuffle_indices]
 
-x_shuff = X[shuffle_indices]
-y_shuff = Y[shuffle_indices]
+shuffle_indices = np.random.permutation(np.arange(len(Y_dev)))
+x_dev = X_dev[shuffle_indices]
+y_dev = Y_dev[shuffle_indices]
+
 
 # Percentage of the training data to use for validation
-dev_sample_index = -1 * int(FLAGS.dev_sample_percentage * float(len(Y)))
+#dev_sample_index = -1 * int(FLAGS.dev_sample_percentage * float(len(Y)))
 
 # Split train/test set
-idx = -1 * int(FLAGS.dev_sample_percentage * float(len(Y)))
-x_train, x_dev = x_shuff[:idx], x_shuff[idx:]
-y_train, y_dev = y_shuff[:idx], y_shuff[idx:]
+#idx = -1 * int(FLAGS.dev_sample_percentage * float(len(Y)))
+#x_train = x_shuff[:idx], x_shuff[idx:]
+#y_train = y_shuff[:idx], y_shuff[idx:]
 # print("Train/Val split: {:d}/{:d}".format(len(y_train), len(y_val)))
 
 vocab_size = 16797
@@ -176,7 +183,7 @@ with tf.Graph().as_default():
             if writer:
                 writer.add_summary(summaries, step)
 
-        def print_step(x_batch, y_batch, writer=None):
+        def print_step(x_batch, y_batch, writer=None, filename):
             """
             Prints embeddings
             """
@@ -204,10 +211,12 @@ with tf.Graph().as_default():
             current_step = tf.train.global_step(sess, global_step)
             if current_step % FLAGS.print_embedding == 0:
                 print("\nPrint Embeddings:")
-		print_step(x_train_1, y_train_1, writer=dev_summary_writer,file="train1.out")
-		print_step(x_train_2,y_train_2, writer=dev_summary_writer, file="train2.out")
-		print_step(x_dev, y_dev, writer=dev_summary_writer,file="dev.out")
-                print_step(X_final, Y_final, writer=dev_summary_writer,file="test.out")
+                print_step(X_train[:20000], Y_train[:20000], writer=dev_summary_writer)
+                print_step(X_train[20000:40000], Y_train[20000:40000], writer=dev_summary_writer)
+                print_step(X_train[40000:], Y_train[40000:], writer=dev_summary_writer)
+                print_step(X_dev, Y_dev, writer=dev_summary_writer)
+                print_step(X_test, Y_test, writer=dev_summary_writer)
+                print("Done")
             if current_step % FLAGS.evaluate_every == 0:
                 print("\nEvaluation:")
                 dev_step(x_dev, y_dev, writer=dev_summary_writer)
