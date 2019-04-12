@@ -27,10 +27,10 @@ tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularization lambda (default: 
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 128, "Batch Size (default: 64)")
-tf.flags.DEFINE_integer("num_epochs", 75, "Number of training epochs (default: 200)")
-tf.flags.DEFINE_integer("evaluate_every", 50, "Evaluate model on dev set after this many steps (default: 100)")
-tf.flags.DEFINE_integer("print_embedding", 500, "Print embedding after training")
-tf.flags.DEFINE_integer("checkpoint_every", 500, "Save model after this many steps (default: 100)")
+tf.flags.DEFINE_integer("num_epochs", 40, "Number of training epochs (default: 200)")
+tf.flags.DEFINE_integer("evaluate_every", 2000, "Evaluate model on dev set after this many steps (default: 100)")
+tf.flags.DEFINE_integer("print_embedding", 16000, "Print embedding after training")
+tf.flags.DEFINE_integer("checkpoint_every",17000, "Save model after this many steps (default: 100)")
 tf.flags.DEFINE_integer("num_checkpoints", 3, "Number of checkpoints to store (default: 5)")
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
@@ -50,7 +50,7 @@ print ("Loading Dataset ...")
 
 
 
-dataset = IMDBDataset('../txt_cnn_glove/glove_embeddings/sst-2/vocab.pckl')
+dataset = IMDBDataset('../txt_cnn_glove/glove_embeddings/sst-2/sst2_vocab.pckl')
 X, Y = dataset.load()
 X_final, Y_final = dataset.load()
 print ("Dataset loaded. Preparing data and loading embeddings ...")
@@ -204,8 +204,10 @@ with tf.Graph().as_default():
             current_step = tf.train.global_step(sess, global_step)
             if current_step % FLAGS.print_embedding == 0:
                 print("\nPrint Embeddings:")
-                print_step(X_final, Y_final, writer=dev_summary_writer)
-                print("Done")
+		print_step(x_train_1, y_train_1, writer=dev_summary_writer,file="train1.out")
+		print_step(x_train_2,y_train_2, writer=dev_summary_writer, file="train2.out")
+		print_step(x_dev, y_dev, writer=dev_summary_writer,file="dev.out")
+                print_step(X_final, Y_final, writer=dev_summary_writer,file="test.out")
             if current_step % FLAGS.evaluate_every == 0:
                 print("\nEvaluation:")
                 dev_step(x_dev, y_dev, writer=dev_summary_writer)
