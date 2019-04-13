@@ -40,16 +40,75 @@ def train_classifier(x_train, y_train, x_test, y_test):
 	return prec, f1, acc, clf
 
 
+def intra_emb_analysis(vectors):
+	angles = []
+	for i in range(len(vectors)):
+		for j in range(i + 1, len(vectors)):
+			angles.append(angle_between_vecs(vectors[i], vectors[j]))
+	print('Intra-angle between embeddings: {0} +- {1}'.format(np.mean(angles), np.std(angles)))
+
+
+def analyse_embeddings(x_test, y_pred, experiment):
+	if experiment == 'KCCA':
+		pos_bert_embs = []
+		neg_bert_embs = []
+		pos_cnn_embs = []
+		neg_cnn_embs = []
+
+		bert_norms = []
+		cnn_norms = []
+
+		for i in range(len(y_pred)):
+			bert_norms.append(np.linalg.norm(x_test['KCCA_0'].values[i]))
+			cnn_norms.append(np.linalg.norm(x_test['KCCA_1'].values[i]))
+			if y_pred[i] == 1:
+				pos_bert_embs.append(np.subtract(x_test['KCCA_0'].values[i], x_test['KCCA'].values[i]))
+				pos_cnn_embs.append(np.subtract(x_test['KCCA_1'].values[i], x_test['KCCA'].values[i]))
+			elif y_pred[i] == 0:
+				neg_bert_embs.append(np.subtract(x_test['KCCA_0'].values[i], x_test['KCCA'].values[i]))
+				neg_cnn_embs.append(np.subtract(x_test['KCCA_1'].values[i], x_test['KCCA'].values[i]))
+		
+		mean_pos_bert_vec = np.mean(pos_bert_embs, axis=0)
+		std_pos_bert_vec = np.std(pos_bert_embs, axis=0)
+		mean_neg_bert_vec = np.mean(neg_bert_embs, axis=0)
+		std_neg_bert_vec = np.std(neg_bert_embs, axis=0)
+		mean_pos_cnn_vec = np.mean(pos_cnn_embs, axis=0)
+		# std_pos_cnn_vec = np.std(pos_cnn_embs, axis=0)
+		# mean_neg_cnn_vec
+		# std_neg_cnn_vec
+
+		print('BERT emb norm: {0} +- {1}\nCNN emb norm: {2} +- {3}'.format(np.mean(bert_norms), np.std(bert_norms), np.mean(cnn_norms), np.std(cnn_norms)))
+
+		print('Printing vector embedding analysis:\nPos BERT mean and std:')
+		print(mean_pos_bert_vec)
+		# print(std_pos_bert_vec)
+		# print('Neg BERT mean and std:')
+		# print(mean_neg_bert_vec)
+		# print(std_neg_bert_vec)
+
+		print('Pos CNN mean and std:')
+		print(mean_pos_cnn_vec)
+		# print(mean_pos_cnn_vec)
+
+		intra_emb_analysis(mean_pos_bert_vec)
+
+
 def predicted_sentences(clf, experiment, x_test, y_test):
 	correct_preds = set()
 	incorrect_preds = set()
 	y_pred = clf.predict(np.asarray(x_test[experiment].tolist()))
+	analyse_embeddings(x_test, y_pred, experiment)
 	for i in range(len(y_pred)):
 		if y_pred[i] == y_test[i]:
 			correct_preds.add(x_test['Review'].values[i])
 		else:
 			incorrect_preds.add(x_test['Review'].values[i])
 	return correct_preds, incorrect_preds
+
+
+def angle_between_vecs(vec1, vec2):
+	cos_sim = np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+	return np.degrees(math.acos(cos_sim))
 
 
 def kcca_predictions_analysis(kcca_correct_bert_cnn_incorrect, x_test):
@@ -61,10 +120,8 @@ def kcca_predictions_analysis(kcca_correct_bert_cnn_incorrect, x_test):
 		cnn_emb = df_row['KCCA_1']	# Projected CNN Embeddings
 		kcca_emb = df_row['KCCA']
 
-		bert_kcca_cos_sim = np.dot(bert_emb.values[0], kcca_emb.values[0]) / (np.linalg.norm(bert_emb.values[0]) * np.linalg.norm(kcca_emb.values[0]))
-		bert_kcca_angle_deg = np.degrees(math.acos(bert_kcca_cos_sim))
-		cnn_kcca_cos_sim = np.dot(cnn_emb.values[0], kcca_emb.values[0]) / (np.linalg.norm(cnn_emb.values[0]) * np.linalg.norm(kcca_emb.values[0]))
-		cnn_kcca_angle_deg = np.degrees(math.acos(cnn_kcca_cos_sim))
+		bert_kcca_angle_deg = angle_between_vecs(bert_emb.values[0], kcca_emb.values[0])
+		cnn_kcca_angle_deg = angle_between_vecs(cnn_emb.values[0], kcca_emb.values[0])
 
 		results.append([review, bert_emb, cnn_emb, kcca_emb])
 		print(review)
@@ -92,7 +149,7 @@ def main():
 
 	# CCA:
 	cca_xdim = min(bert_dimension, cnn_dimension)
-	cca_x = cca_transform(bert_embeddings, cnn_embeddings, cca_xdim, 500)
+	# cca_x = cca_transform(bert_embeddings, cnn_embeddings, cca_xdim, 500)
 
 	# Concatenate BERT and CNN:
 	concat_x = np.concatenate((bert_embeddings, cnn_embeddings), axis=1)
@@ -100,10 +157,10 @@ def main():
 	df['KCCA_1'] = pd.Series(map(lambda x:[x], kcca_x[1])).apply(lambda x:x[0])
 	kcca_x = 0.5 * (kcca_x[0] + kcca_x[1])
 	df['KCCA'] = pd.Series(map(lambda x:[x], kcca_x)).apply(lambda x:x[0])
-	df['CCA'] = pd.Series(map(lambda x:[x], cca_x)).apply(lambda x:x[0])
+	# df['CCA'] = pd.Series(map(lambda x:[x], cca_x)).apply(lambda x:x[0])
 	df['Concat'] = pd.Series(map(lambda x:[x], concat_x)).apply(lambda x:x[0])
 
-	n_expts = 20
+	n_expts = 1
 	seeds = random.sample(range(1, 1000), n_expts)
 	kcca_precs = []
 	kcca_f1s = []
@@ -125,10 +182,10 @@ def main():
 		x_train, x_test, y_train, y_test = train_test_split(df, y, stratify=y, test_size=0.1, random_state=seeds[expt_id])
 
 		# print('Experiment:', expt_id)
-		cca_prec, cca_f1, cca_acc, cca_clf = train_classifier(np.asarray(x_train['CCA'].tolist()), y_train, np.asarray(x_test['CCA'].tolist()), y_test)
-		cca_precs.append(cca_prec)
-		cca_f1s.append(cca_f1)
-		cca_accs.append(cca_acc)
+		# cca_prec, cca_f1, cca_acc, cca_clf = train_classifier(np.asarray(x_train['CCA'].tolist()), y_train, np.asarray(x_test['CCA'].tolist()), y_test)
+		# cca_precs.append(cca_prec)
+		# cca_f1s.append(cca_f1)
+		# cca_accs.append(cca_acc)
 		# cca_correct_preds, _ = predicted_sentences(cca_clf, 'CCA', x_test, y_test)
 
 		kcca_prec, kcca_f1, kcca_acc, kcca_clf = train_classifier(np.asarray(x_train['KCCA'].tolist()), y_train, np.asarray(x_test['KCCA'].tolist()), y_test)
@@ -161,7 +218,7 @@ def main():
 		concat_accs.append(concat_acc)
 	
 	print('\nSummary of {0} experiments:\n'.format(n_expts))
-	print('CCA:\nPrecision: {0} +- {1}\nF1: {2} +- {3}\nAccuracy: {4} +- {5}\n'.format(np.mean(cca_precs), np.std(cca_precs), np.mean(cca_f1s), np.std(cca_f1s), np.mean(cca_accs), np.std(cca_accs)))
+	# print('CCA:\nPrecision: {0} +- {1}\nF1: {2} +- {3}\nAccuracy: {4} +- {5}\n'.format(np.mean(cca_precs), np.std(cca_precs), np.mean(cca_f1s), np.std(cca_f1s), np.mean(cca_accs), np.std(cca_accs)))
 	print('KCCA:\nPrecision: {0} +- {1}\nF1: {2} +- {3}\nAccuracy: {4} +- {5}\n'.format(np.mean(kcca_precs), np.std(kcca_precs), np.mean(kcca_f1s), np.std(kcca_f1s), np.mean(kcca_accs), np.std(kcca_accs)))
 	print('CNN:\nPrecision: {0} +- {1}\nF1: {2} +- {3}\nAccuracy: {4} +- {5}\n'.format(np.mean(cnn_precs), np.std(cnn_precs), np.mean(cnn_f1s), np.std(cnn_f1s), np.mean(cnn_accs), np.std(cnn_accs)))
 	print('BERT:\nPrecision: {0} +- {1}\nF1: {2} +- {3}\nAccuracy: {4} +- {5}\n'.format(np.mean(bert_precs), np.std(bert_precs), np.mean(bert_f1s), np.std(bert_f1s), np.mean(bert_accs), np.std(bert_accs)))
