@@ -170,6 +170,8 @@ class CCA(_CCABase):
     def __init__(self, reg = 0., numCC = 10, kernelcca = True, ktype = None, verbose = True, cutoff = 1e-15, gausigma = 1.0):
         if(ktype == 'gaussian'):
             super(CCA, self).__init__(reg = reg, numCC = numCC, kernelcca = kernelcca, ktype = ktype, verbose = verbose, cutoff = cutoff, gausigma = gausigma)
+        else:
+            super(CCA, self).__init__(reg = reg, numCC = numCC, kernelcca = kernelcca, ktype = ktype, verbose = verbose, cutoff = cutoff)
 
     def train(self, data):
         return super(CCA, self).train(data)

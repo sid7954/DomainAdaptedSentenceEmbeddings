@@ -17,9 +17,11 @@ import random
 
 
 def cca_transform(embed1, embed2, ndim, n_iter):
-	cca = CCA(n_components=ndim, max_iter=n_iter)
-	cca.fit(embed1, embed2)
-	cancomps = cca.transform(embed1, embed2)
+	# cca = CCA(n_components=ndim, max_iter=n_iter)
+	# cca.fit(embed1, embed2)
+	# cancomps = cca.transform(embed1, embed2)
+	cca = rcca.CCA(reg=0.01, numCC=ndim, kernelcca=False)
+	cancomps = cca.train([embed1, embed2]).comps
 	return 0.5 * (cancomps[0] + cancomps[1])
 
 
@@ -97,7 +99,7 @@ def predicted_sentences(clf, experiment, x_test, y_test):
 	correct_preds = set()
 	incorrect_preds = set()
 	y_pred = clf.predict(np.asarray(x_test[experiment].tolist()))
-	analyse_embeddings(x_test, y_pred, experiment)
+	# analyse_embeddings(x_test, y_pred, experiment)
 	for i in range(len(y_pred)):
 		if y_pred[i] == y_test[i]:
 			correct_preds.add(x_test['Review'].values[i])
@@ -149,7 +151,7 @@ def main():
 
 	# CCA:
 	cca_xdim = min(bert_dimension, cnn_dimension)
-	# cca_x = cca_transform(bert_embeddings, cnn_embeddings, cca_xdim, 500)
+	cca_x = cca_transform(bert_embeddings, cnn_embeddings, cca_xdim, 500)
 
 	# Concatenate BERT and CNN:
 	concat_x = np.concatenate((bert_embeddings, cnn_embeddings), axis=1)
@@ -157,10 +159,10 @@ def main():
 	df['KCCA_1'] = pd.Series(map(lambda x:[x], kcca_x[1])).apply(lambda x:x[0])
 	kcca_x = 0.5 * (kcca_x[0] + kcca_x[1])
 	df['KCCA'] = pd.Series(map(lambda x:[x], kcca_x)).apply(lambda x:x[0])
-	# df['CCA'] = pd.Series(map(lambda x:[x], cca_x)).apply(lambda x:x[0])
+	df['CCA'] = pd.Series(map(lambda x:[x], cca_x)).apply(lambda x:x[0])
 	df['Concat'] = pd.Series(map(lambda x:[x], concat_x)).apply(lambda x:x[0])
 
-	n_expts = 1
+	n_expts = 20
 	seeds = random.sample(range(1, 1000), n_expts)
 	kcca_precs = []
 	kcca_f1s = []
@@ -182,11 +184,11 @@ def main():
 		x_train, x_test, y_train, y_test = train_test_split(df, y, stratify=y, test_size=0.1, random_state=seeds[expt_id])
 
 		# print('Experiment:', expt_id)
-		# cca_prec, cca_f1, cca_acc, cca_clf = train_classifier(np.asarray(x_train['CCA'].tolist()), y_train, np.asarray(x_test['CCA'].tolist()), y_test)
-		# cca_precs.append(cca_prec)
-		# cca_f1s.append(cca_f1)
-		# cca_accs.append(cca_acc)
-		# cca_correct_preds, _ = predicted_sentences(cca_clf, 'CCA', x_test, y_test)
+		cca_prec, cca_f1, cca_acc, cca_clf = train_classifier(np.asarray(x_train['CCA'].tolist()), y_train, np.asarray(x_test['CCA'].tolist()), y_test)
+		cca_precs.append(cca_prec)
+		cca_f1s.append(cca_f1)
+		cca_accs.append(cca_acc)
+		cca_correct_preds, _ = predicted_sentences(cca_clf, 'CCA', x_test, y_test)
 
 		kcca_prec, kcca_f1, kcca_acc, kcca_clf = train_classifier(np.asarray(x_train['KCCA'].tolist()), y_train, np.asarray(x_test['KCCA'].tolist()), y_test)
 		kcca_precs.append(kcca_prec)
@@ -218,7 +220,7 @@ def main():
 		concat_accs.append(concat_acc)
 	
 	print('\nSummary of {0} experiments:\n'.format(n_expts))
-	# print('CCA:\nPrecision: {0} +- {1}\nF1: {2} +- {3}\nAccuracy: {4} +- {5}\n'.format(np.mean(cca_precs), np.std(cca_precs), np.mean(cca_f1s), np.std(cca_f1s), np.mean(cca_accs), np.std(cca_accs)))
+	print('CCA:\nPrecision: {0} +- {1}\nF1: {2} +- {3}\nAccuracy: {4} +- {5}\n'.format(np.mean(cca_precs), np.std(cca_precs), np.mean(cca_f1s), np.std(cca_f1s), np.mean(cca_accs), np.std(cca_accs)))
 	print('KCCA:\nPrecision: {0} +- {1}\nF1: {2} +- {3}\nAccuracy: {4} +- {5}\n'.format(np.mean(kcca_precs), np.std(kcca_precs), np.mean(kcca_f1s), np.std(kcca_f1s), np.mean(kcca_accs), np.std(kcca_accs)))
 	print('CNN:\nPrecision: {0} +- {1}\nF1: {2} +- {3}\nAccuracy: {4} +- {5}\n'.format(np.mean(cnn_precs), np.std(cnn_precs), np.mean(cnn_f1s), np.std(cnn_f1s), np.mean(cnn_accs), np.std(cnn_accs)))
 	print('BERT:\nPrecision: {0} +- {1}\nF1: {2} +- {3}\nAccuracy: {4} +- {5}\n'.format(np.mean(bert_precs), np.std(bert_precs), np.mean(bert_f1s), np.std(bert_f1s), np.mean(bert_accs), np.std(bert_accs)))
